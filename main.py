@@ -1,9 +1,16 @@
+import sys
 from PIL import Image
 
+
 MAX_INTENSITY = 255
-SCALE = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+INTENSITY_SCALE = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
+
 
 def get_pixel_matrix(img, height, width):
+    """
+        Return a pixel matrix of size height x width from the image provided, where each pixel is 
+        a tuple of rgb values.
+    """
     pixel_matrix = []
 
     pixels = img.load()
@@ -15,7 +22,12 @@ def get_pixel_matrix(img, height, width):
     
     return pixel_matrix
 
+
 def get_intensity_matrix(pixel_matrix):
+    """
+        Return an intensity matrix provided a pixel matrix, where the intensity of a pixel is the 
+        average of its rgb values.
+    """
     intensity_matrix = []
     
     for row in pixel_matrix:
@@ -28,7 +40,12 @@ def get_intensity_matrix(pixel_matrix):
     
     return intensity_matrix
 
+
 def get_char_matrix(intensity_matrix):
+    """
+        Return a character matrix provided an intensity matrix, where each pixel is assigned a 
+        character from the INTENSITY_SCALE based on its intensity.
+    """
     char_matrix = []
     
     for row in intensity_matrix:
@@ -40,36 +57,56 @@ def get_char_matrix(intensity_matrix):
     
     return char_matrix
 
-def convert_to_char(pixel_intensity):
-    global SCALE, MAX_INTENSITY
-    idx = int(pixel_intensity / MAX_INTENSITY * (len(SCALE)-1))
-    return SCALE[idx]
 
-if __name__ == "__main__":
+def convert_to_char(pixel_intensity):
+    """
+        Return a character from the INTENSITY_SCALE based on the pixel_intensity provided.
+    """
+    idx = int(pixel_intensity / MAX_INTENSITY * (len(INTENSITY_SCALE)-1))
+    return INTENSITY_SCALE[idx]
+
+
+def render_art(char_matrix):
+    """
+        Print the ASCII art on the terminal window provided the character matrix.
+    """
+    for row in char_matrix:
+        # the height of a character on a terminal window is roughly 3 times its width, to offset
+        # this we print each character of each row of char_matrix 3 times
+        modified_row = [c*3 for c in row]
+        print("".join(modified_row))
+
+
+def main():
     try:
+        # check if filename has been provided
+        if len(sys.argv) == 1:
+            print("Please provide a filename. For example\n\tpython main.py pups.jpg")
+            return
+
         # load file
-        filepath = "images/rick.jpg"
+        filepath = f"images/{sys.argv[1]}"
         img = Image.open(filepath)
 
         # reduce image size
-        img.thumbnail((1000, 350))
+        img.thumbnail((1000, 200))
         width, height = img.size
 
-        # convert image to a pixel matrix of size height x width, where each pixel is 
-        # a tuple of rgb values
+        # get pixel matrix from image
         pixel_matrix = get_pixel_matrix(img, height, width)
 
-        # transform pixel matrix to represent each pixel using a single number instead of a tuple
+        # get intensity matrix from pixel matrix
         intensity_matrix = get_intensity_matrix(pixel_matrix)
 
-        # create char matrix assigning each pixel an ascii character based on its intensity
+        # get character matrix from intensity matrix
         char_matrix = get_char_matrix(intensity_matrix)
         
-        # print ascii image
-        for row in char_matrix:
-            # each char in row is multiplied by 3 as the height of a char in terminal is
-            # 3 times its width
-            print("".join([c*3 for c in row]))
+        # print ascii art
+        render_art(char_matrix)
     
     except FileNotFoundError:
-        print("Couldn't locate file.")
+        print(f"Couldn't find {sys.argv[1]} in the images folder.")
+
+
+if __name__ == "__main__":
+    main()
